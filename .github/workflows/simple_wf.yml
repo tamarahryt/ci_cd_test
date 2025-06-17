@@ -1,54 +1,53 @@
-name: Quick Looker Check
+name: Check DIM
 
 on:
   pull_request:
-    branches: [main]
-    paths: ['**/*.lkml', '**/*.lookml']
+    paths: ['**/*.view.lkml']
       
 jobs:
-   quick-validation:
-      name: Validate LookML
-      runs-on: ubuntu-latest
+  dimension-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - ﻿﻿name: Check Views Have Dimensions
+      run: |
+        echo "Checking views for dim..."
+        
+        view_files=$(find . -name "*.view.lkml")
 
-      steps:
-      - ﻿﻿name: Checkout 
-        uses: actions/checkout@v4
-      
-      - ﻿﻿name: Setup Python 
-        uses: actions/setup-python@v4
-        with:
-           python-version: '3.9'
+        if [ -z "$view_files" ]; then
+          echo " No view files found"
+          exit 0
+        fi
 
-      - name: Install Looker SDK 
-        run: pip install looker-sdk==23.20.0
-      
-      - name: Quick LookML Check 
-        env:
-           LOOKER_BASE_URL: ${{ secrets.LOOKER_BASE_URL }} 
-           LOOKER_CLIENT_ID: ${{ secrets.LOOKER_CLIENT_ID }}
-           LOOKER_CLIENT_ SECRET: ${{ secrets.LOOKER_CLIENT_SECRET }}
-        run: |
-           python -c "
-           import looker_sdk
-           import sys
-  
-           # Initialize SDK
-           sdk = looker_sdk.init40 ()
-  
-           # Quick validation
-           try:
-              validation = sdk. validate_project(project_id='ci_cd_test'
-  
-              if validation.errors:
-                 print('X LookML Errors Found:')
-                 for error in validation.errors:
-                    print(f' - {error message}')
-                    if error.file_path:
-                       print(f'    File: {error.file_path}')
-                 sys.exit(1)
-              else:
-                print(' LookML validation passed!')
-           except Exception as e:
-              print(f'* Validation failed: {e}')
-              sys.exit(1)
-           "
+        failed_views=""
+
+        #Check each view file
+        for file in $view_files; do
+          echo "Checking: $file"
+
+          #Count DIM in the file
+          dimension_count=$(grep -c "^\s*dimension" "$file" || true)
+
+          if [ "dimension_count" -eq 0 ];
+            echo " $file has NO dim"
+            failed_views=$failed_views $file"
+          else
+            echo " $file has $dimension_count dim(s)"
+          fi
+        done
+
+        #report result
+        if [ -n "$failed_views" ]; then
+          echo ""
+          echo " FAILED: These view have no dim:"
+          for view in $failed_views; do
+            echo " - $view"
+          done
+          exit 1
+        else
+          echo ""
+          echo " SUCCESS"
+        fi
+   
