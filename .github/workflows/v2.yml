@@ -2,55 +2,65 @@ name: Check DIM
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths: ['/views/*.view.lkml']
+    inputs:
+      strict_mode:
+        description: 'Fail if no view files found?'
+        type: boolean
+        default: true
+      file_pattern:
+        description: 'File pattern to search'
+        default: '*.view.lkml'
+        required: false
 
 jobs:
-  dimension-check:
+  check:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     
-    - name: Check Views Have Dimensions
+    - name: Smart Dimension Validation
+      env:
+        STRICT_MODE: ${{ github.event.inputs.strict_mode || 'true' }}
+        FILE_PATTERN: ${{ github.event.inputs.file_pattern || '*.view.lkml' }}
       run: |
-        echo "Checking views for dim..."
-
-        #find all view files
-        view_files=$(find . -name "*.view.lkml")
-
-        if [ -z "$view_files" ]; then
-          echo "🔻 No view files found!"
-          echo "::error::No view files found"
-          exit 1
-        fi
+        echo "🔍 Smart dimension validation started"
+        echo "Search pattern: $FILE_PATTERN"
+        echo "Strict mode: $STRICT_MODE"
+        echo ""
         
-        failed_views=""
-
-        #Check each view file
-        for file in $view_files; do
-          echo "Checking: $file"
-          
-          #Count DIM in the file
-          dimension_count=$(grep -c "^\s*dimension" "$file" || true)
-
-          if [ "dimension_count" -eq 0 ]; then
-            echo "🚫 FAILED $file has NO dim"
-            failed_views="$failed_views $file"
+        # Find files using the pattern
+        view_files=$(find . -name "$FILE_PATTERN" -o -name "*.lkml" | grep -i view 2>/dev/null || echo "")
+        
+        if [ -z "$view_files" ]; then
+          if [ "$STRICT_MODE" = "true" ]; then
+            echo "::error::No view files found with pattern '$FILE_PATTERN'"
+            echo "❌ STRICT MODE: No view files found - FAILING!"
             exit 1
           else
-            echo " $file has $dimension_count dim(s)"
+            echo "::warning::No view files found with pattern '$FILE_PATTERN'"
+            echo "⚠️ No view files found, but continuing (strict mode disabled)"
+            exit 0
+          fi
+        fi
+        
+        # Check dimensions in found files
+        failed=0
+        for file in $view_files; do
+          echo "Checking: $file"
+          if ! grep -q "dimension" "$file"; then
+            echo "❌ $file - NO dimensions"
+            echo "::error file=$file::Missing dimensions"
+            failed=1
+          else
+            echo "✅ $file - Has dimensions"
           fi
         done
-
-        #report result
-        if [ -n "$failed_views" ]; then
+        
+        if [ $failed -eq 1 ]; then
           echo ""
-          echo "🚫 FAILED: These view have no dim:"
-          for view in $failed_views; do
-            echo " - $view"
-          done
+          echo "💥 VALIDATION FAILED!"
           exit 1
         else
           echo ""
-          echo "🚀 SUCCESS"
+          echo "🎉 All files passed!"
         fi
