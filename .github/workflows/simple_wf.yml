@@ -1,0 +1,54 @@
+name: Quick Looker Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['**/*.lkml', '**/*.lookml']
+      
+jobs:
+   quick-validation:
+      name: Validate LookML
+      runs-on: ubuntu-latest
+
+      steps:
+      - ﻿﻿name: Checkout 
+        uses: actions/checkout@v4
+      
+      - ﻿﻿name: Setup Python 
+        uses: actions/setup-python@v4
+        with:
+           python-version: '3.9'
+
+      - name: Install Looker SDK 
+        run: pip install looker-sdk==23.20.0
+      
+      - name: Quick LookML Check 
+        env:
+           LOOKER_BASE_URL: ${{ secrets.LOOKER_BASE_URL }} 
+           LOOKER_CLIENT_ID: ${{ secrets.LOOKER_CLIENT_ID }}
+           LOOKER_CLIENT_ SECRET: ${{ secrets.LOOKER_CLIENT_SECRET }}
+        run: |
+           python -c "
+           import looker_sdk
+           import sys
+  
+           # Initialize SDK
+           sdk = looker_sdk.init40 ()
+  
+           # Quick validation
+           try:
+              validation = sdk. validate_project(project_id='ci_cd_test'
+  
+              if validation.errors:
+                 print('X LookML Errors Found:')
+                 for error in validation.errors:
+                    print(f' - {error message}')
+                    if error.file_path:
+                       print(f'    File: {error.file_path}')
+                 sys.exit(1)
+              else:
+                print(' LookML validation passed!')
+           except Exception as e:
+              print(f'* Validation failed: {e}')
+              sys.exit(1)
+           "
