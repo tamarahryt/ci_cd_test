@@ -5,6 +5,7 @@ view: account {
 
   measure: count {
     type: number
+    label: "one measure"
   }
 
 }
