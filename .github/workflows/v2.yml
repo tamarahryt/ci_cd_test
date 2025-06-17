@@ -3,7 +3,7 @@ name: Check DIM
 on:
   workflow_dispatch:
   pull_request:
-    paths: ['**/*.view.lkml']
+    paths: ['**/views/*.view']
 
 jobs:
   dimension-check:
@@ -16,7 +16,7 @@ jobs:
         echo "Checking views for dim..."
 
         #find all view files
-        view_files=$(find . -name "*.view.lkml")
+        view_files=$(find . -name "*.view")
 
         if [ -z "$view_files" ]; then
           echo " No view files found"
