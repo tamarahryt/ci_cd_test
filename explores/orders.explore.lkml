@@ -1,6 +1,6 @@
 explore: orders {
   label: "Orders"
-  description: "Explore for orders. Joins order_items to allow item-level analysis alongside orders."
+
 
   # Join order_items to enable querying item-level details from the orders explore
   join: order_items {
