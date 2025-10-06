@@ -1,0 +1,66 @@
+name: Check DIM
+
+on:
+  workflow_dispatch:
+    inputs:
+      strict_mode:
+        description: 'Fail if no view files found?'
+        type: boolean
+        default: true
+      file_pattern:
+        description: 'File pattern to search'
+        default: '*.view.lkml'
+        required: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Smart Dimension Validation
+      env:
+        STRICT_MODE: ${{ github.event.inputs.strict_mode || 'true' }}
+        FILE_PATTERN: ${{ github.event.inputs.file_pattern || '*.view.lkml' }}
+      run: |
+        echo "🔍 Smart dimension validation started"
+        echo "Search pattern: $FILE_PATTERN"
+        echo "Strict mode: $STRICT_MODE"
+        echo ""
+        
+        # Find files using the pattern
+        view_files=$(find . -name "$FILE_PATTERN" -o -name "*.lkml" | grep -i view 2>/dev/null || echo "")
+        
+        if [ -z "$view_files" ]; then
+          if [ "$STRICT_MODE" = "true" ]; then
+            echo "::error::No view files found with pattern '$FILE_PATTERN'"
+            echo "❌ STRICT MODE: No view files found - FAILING!"
+            exit 1
+          else
+            echo "::warning::No view files found with pattern '$FILE_PATTERN'"
+            echo "⚠️ No view files found, but continuing (strict mode disabled)"
+            exit 0
+          fi
+        fi
+        
+        # Check dimensions in found files
+        failed=0
+        for file in $view_files; do
+          echo "Checking: $file"
+          if ! grep -q "dimension" "$file"; then
+            echo "❌ $file - NO dimensions"
+            echo "::error file=$file::Missing dimensions"
+            failed=1
+          else
+            echo "✅ $file - Has dimensions"
+          fi
+        done
+        
+        if [ $failed -eq 1 ]; then
+          echo ""
+          echo "💥 VALIDATION FAILED!"
+          exit 1
+        else
+          echo ""
+          echo "🎉 All files passed!"
+        fi
