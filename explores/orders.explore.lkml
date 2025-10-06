@@ -1,3 +1,7 @@
+include: "/views/orders.view.lkml"
+include: "/views/order_items.view.lkml"
+
+
 explore: orders {
   label: "Orders"
   # No 'from:' needed since explore name matches view name
