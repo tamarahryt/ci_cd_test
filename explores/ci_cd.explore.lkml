@@ -1,5 +1,1 @@
-include: "/views/*.view"
-
-explore: account {
-  label: "Accounts"
-}
+#include: "/views/*.view"
