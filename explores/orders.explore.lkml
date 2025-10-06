@@ -7,7 +7,7 @@ explore: orders {
     type: left_outer
     sql_on: ${orders.order_id} = ${order_items.order_id} ;;
     relationship: one_to_many
-    description: "Order items for each order"
+
   }
 
 }

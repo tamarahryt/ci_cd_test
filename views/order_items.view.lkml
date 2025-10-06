@@ -1,8 +1,6 @@
 view: order_items {
   sql_table_name: `bigquery-public-data.thelook_ecommerce.order_items` ;;
 
-  description: "Programatically generated order items for The Look fictitious e-commerce store"
-
   # Primary key
   dimension: id {
     type: number
