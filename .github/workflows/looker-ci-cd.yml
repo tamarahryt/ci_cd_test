@@ -52,7 +52,7 @@ jobs:
             echo "::error file=$file::Missing dimensions"
             failed=1
           else
-            echo "✅ $file - Has dimensions"
+            echo "✅ $file - Has dimensions
           fi
         done
         
