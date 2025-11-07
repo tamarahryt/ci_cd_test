@@ -1,0 +1,53 @@
+# .github/config/linting-rules.yaml
+# Custom rules for LookML linting. Used by lookml-linter.py
+
+mandatory_fields:
+  # Mandatory fields for dimensions in all views
+  dimension: 
+    - label
+    - description
+  # Mandatory fields for measures in all views
+  measure: 
+    - label
+    - description
+    - type
+  # Mandatory fields for Explores
+  explore: 
+    - description
+
+naming_conventions:
+  # Enforce snake_case for dimension/measure/view names
+  use_snake_case: true
+  # Boolean dimensions must start with one of these prefixes
+  boolean_prefixes: 
+    - is_
+    - has_
+    - can_
+  # Words that should be avoided in field names (can cause confusion or reserved word issues)
+  avoid_reserved_words: 
+    - order
+    - group
+    - select
+    - from
+    - where
+
+performance_rules:
+  # Flag views that use SELECT * in derived tables
+  avoid_select_star: true
+  # Limit the depth of nested SQL (e.g., SELECT ... (SELECT ... (SELECT ...)))
+  limit_nested_queries: 3
+
+security_rules:
+  # Warning if PII-like fields are detected without corresponding explore access filters
+  require_access_filters_for_pii: true
+  # Flag potential hardcoded credentials/keys in LookML files
+  no_hardcoded_secrets: true
+
+custom_validation_rules:
+  # NEW RULE: List of view names that are explicitly forbidden in the project.
+  # (Case-insensitive check is implemented in the linter script)
+  excluded_view_names: 
+    - old_dep_data_view 
+    - view_to_be_retired
+    - deprecated_sales_raw
+    # Add any other view names you want to check for here.
